@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
+import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -74,7 +76,7 @@ public class Nmap {
 			inetAddress = (InetAddress) direccionesIp.nextElement();
 		}
 
-		mascaraRed = networkIntefrface.getInterfaceAddresses().get(1).getNetworkPrefixLength() + "";
+		mascaraRed = networkIntefrface.getInterfaceAddresses().get(0).getNetworkPrefixLength() + "";
 		mac = getMacAdress(inetAddress);
 	}
 
@@ -130,10 +132,11 @@ public class Nmap {
             		  }
             		  
             		  String ip=red[0]+"."+red[1]+"."+red[2]+"."+red[3];
-            		 // System.out.println(ip);
             		 if(realizarPing(ip)){
             			  hostDisponible.add(ip);
+            			  System.out.println(ip);
             		  }
+            		  
             		 
             	  }
               }
@@ -184,15 +187,25 @@ public class Nmap {
 			if (alcanzable)
 				return true;
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
 		return false;
 
+	}
+	
+	public static void port(){
+	    for (int port = 1; port <= 65535; port++) {
+	         try {
+	            Socket socket = new Socket();
+	            socket.connect(new InetSocketAddress("10.0.48.61", port), 1000);
+	            socket.close();
+	            System.out.println("Port " + port + " is open");
+	        } catch (Exception ex) {
+	        }
+	      }
 	}
 
 	public static void main(String[] args) throws IOException {
@@ -202,9 +215,10 @@ public class Nmap {
 			Nmap x = new Nmap();
 
 			x.listarTarjetas();
-			x.obtenerInformacion(0);
+			x.obtenerInformacion(10);
 			System.out.println(x.imprimirInformacion());
-			x.hostDisponibles();
+			//x.hostDisponibles();
+			x.port();
 			System.out.println(hostDisponibles);
 
 		} catch (SocketException e) {
