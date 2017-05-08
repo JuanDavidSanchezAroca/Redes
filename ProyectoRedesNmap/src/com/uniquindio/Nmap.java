@@ -38,7 +38,7 @@ public class Nmap {
 
 	public Nmap() {
 		interfacesLista = new ArrayList<>();
-		hostDisponible=new ArrayList<>();
+		hostDisponible = new ArrayList<>();
 	}
 
 	/**
@@ -116,33 +116,39 @@ public class Nmap {
 
 	}
 
+	/**
+	 * Metodo que calcula los host disponibles de una red a partir de la
+	 * direccion de la red
+	 * 
+	 */
 	public void calcularHostDisponibles(int i, int numeroE, int red[]) {
 
 		if (numeroE == 255) {
 			return;
 		} else {
-			
-              for(int j=i; j< red.length;j++){
-            	  for(int k=numeroE; k<= 255; k++){
-            		  red[i]=k;
-            		  if(i!=3){
-            			  calcularHostDisponibles(i+1,0, red);
-            		  }else{
-            			 red[i]=k; 
-            		  }
-            		  
-            		  String ip=red[0]+"."+red[1]+"."+red[2]+"."+red[3];
-            		 if(realizarPing(ip)){
-            			  hostDisponible.add(ip);
-            			  System.out.println(ip);
-            		  }
-            		  
-            		 
-            	  }
-              }
+
+			for (int j = i; j < red.length; j++) {
+				for (int k = numeroE; k <= 255; k++) {
+					red[i] = k;
+					if (i != 3) {
+						calcularHostDisponibles(i + 1, 0, red);
+					} else {
+						red[i] = k;
+					}
+
+					String ip = red[0] + "." + red[1] + "." + red[2] + "." + red[3];
+					if (realizarPing(ip)) {
+						hostDisponible.add(ip);
+						System.out.println(ip);
+					}
+
+				}
+			}
 		}
 	}
-
+/**
+ * Metodo que calcula la direccion de la red y llama el metodo verificar host disponibles
+ */
 	public void hostDisponibles() {
 		hostDisponibles = (int) Math.pow(2, 32 - Integer.parseInt(mascaraRed));
 		int aux = Integer.parseInt(mascaraRed);
@@ -174,11 +180,14 @@ public class Nmap {
 		while (mascaraIP[indice] != 255) {
 			indice--;
 		}
-		
-		calcularHostDisponibles(3-indice, dirRed[3-indice],dirRed);
+
+		calcularHostDisponibles(3 - indice, dirRed[3 - indice], dirRed);
 
 	}
 
+	/**
+	 * Metodo que realiza ping a un host 
+	 */
 	public static boolean realizarPing(String ip) {
 		InetAddress direccion;
 		try {
@@ -195,17 +204,20 @@ public class Nmap {
 		return false;
 
 	}
-	
-	public static void port(){
-	    for (int port = 1; port <= 65535; port++) {
-	         try {
-	            Socket socket = new Socket();
-	            socket.connect(new InetSocketAddress("10.0.48.61", port), 1000);
-	            socket.close();
-	            System.out.println("Port " + port + " is open");
-	        } catch (Exception ex) {
-	        }
-	      }
+
+	/**
+	 * Metodo que verfica los puertos disponibles de un host 
+	 */
+	public static void port(String ip) {
+		for (int port = 1; port <= 65535; port++) {
+			try {
+				Socket socket = new Socket();
+				socket.connect(new InetSocketAddress(ip, port), 1000);
+				socket.close();
+				System.out.println("Port " + port + " is open");
+			} catch (Exception ex) {
+			}
+		}
 	}
 
 	public static void main(String[] args) throws IOException {
@@ -217,8 +229,9 @@ public class Nmap {
 			x.listarTarjetas();
 			x.obtenerInformacion(10);
 			System.out.println(x.imprimirInformacion());
-			//x.hostDisponibles();
-			x.port();
+			// x.hostDisponibles();
+			x.port("10.0.48.68");
+			
 			System.out.println(hostDisponibles);
 
 		} catch (SocketException e) {
