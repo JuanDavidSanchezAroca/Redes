@@ -8,6 +8,7 @@ import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
@@ -15,9 +16,13 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
- * @author Juan David Espitia A - Juan David Sanchez A.
+ * @author Juan David Sanchez A.
  * @author Univerisdad Del Quindio
  * @author Armenia - Quindio
  */
@@ -36,6 +41,9 @@ public class Nmap {
 	private static NetworkInterface networkIntefrface = null;
 	private static int hostDisponibles;
 
+	/**
+	 * Constructor de la clase Nmap
+	 */
 	public Nmap() {
 		interfacesLista = new ArrayList<>();
 		hostDisponible = new ArrayList<>();
@@ -49,9 +57,10 @@ public class Nmap {
 	public void listarTarjetas() throws SocketException {
 		Enumeration<NetworkInterface> interfaces = nombreNIC.getNetworkInterfaces();
 		NetworkInterface networkIntefrface = null;
-		while (interfaces.hasMoreElements()) {
+		while (interfaces.hasMoreElements()) { // mientras exista otra tarjeta
 			networkIntefrface = (NetworkInterface) interfaces.nextElement();
-			interfacesLista.add(networkIntefrface.toString());
+			if (networkIntefrface.isUp()) // verifica que la tarje este activa
+				interfacesLista.add(networkIntefrface.toString());
 		}
 	}
 
@@ -63,20 +72,31 @@ public class Nmap {
 	 * @throws SocketException
 	 */
 	public void obtenerInformacion(int intRed) throws SocketException {
+
 		Enumeration<NetworkInterface> interfaces = nombreNIC.getNetworkInterfaces();
 		int contador = -1;
 		while (interfaces.hasMoreElements() && contador != intRed) {
 			networkIntefrface = (NetworkInterface) interfaces.nextElement();
-			contador++;
+			if (networkIntefrface.isUp()) // verifica que la tarje este activa
+				contador++;
 		}
+
 		Enumeration<InetAddress> direccionesIp = networkIntefrface.getInetAddresses();
 		inetAddress = (InetAddress) direccionesIp.nextElement();
-		while ((inetAddress instanceof Inet6Address)) {
 
+		for (InterfaceAddress iface : networkIntefrface.getInterfaceAddresses()) {
+			if (iface == null) {
+				continue;
+			}
+			if (iface.getAddress() instanceof Inet4Address) {
+				mascaraRed = iface.getNetworkPrefixLength() + "";
+			}
+		}
+
+		while ((inetAddress instanceof Inet6Address)) {
 			inetAddress = (InetAddress) direccionesIp.nextElement();
 		}
 
-		mascaraRed = networkIntefrface.getInterfaceAddresses().get(0).getNetworkPrefixLength() + "";
 		mac = getMacAdress(inetAddress);
 	}
 
@@ -135,7 +155,7 @@ public class Nmap {
 					} else {
 						red[i] = k;
 					}
-
+					System.out.println("esperando-...");
 					String ip = red[0] + "." + red[1] + "." + red[2] + "." + red[3];
 					if (realizarPing(ip)) {
 						hostDisponible.add(ip);
@@ -146,9 +166,11 @@ public class Nmap {
 			}
 		}
 	}
-/**
- * Metodo que calcula la direccion de la red y llama el metodo verificar host disponibles
- */
+
+	/**
+	 * Metodo que calcula la direccion de la red y llama el metodo verificar
+	 * host disponibles
+	 */
 	public void hostDisponibles() {
 		hostDisponibles = (int) Math.pow(2, 32 - Integer.parseInt(mascaraRed));
 		int aux = Integer.parseInt(mascaraRed);
@@ -170,13 +192,16 @@ public class Nmap {
 			}
 			cont++;
 		}
+
+		// se clacula l adirecion de la red realizando una operacion and entre
+		// la direcion ip y la mascara de la subred jd
 		int[] dirRed = new int[4];
 		for (int i = 0; i < mascaraIP.length; i++) {
 			dirRed[i] = mascaraIP[i] & Integer.parseInt(ipCadena[i]);
+			System.out.println(dirRed[i]);
 		}
 
 		int indice = 3;
-
 		while (mascaraIP[indice] != 255) {
 			indice--;
 		}
@@ -186,13 +211,13 @@ public class Nmap {
 	}
 
 	/**
-	 * Metodo que realiza ping a un host 
+	 * Metodo que realiza ping a un host
 	 */
 	public static boolean realizarPing(String ip) {
 		InetAddress direccion;
 		try {
 			direccion = InetAddress.getByName(ip);
-			boolean alcanzable = direccion.isReachable(1000);
+			boolean alcanzable = direccion.isReachable(1500);
 			if (alcanzable)
 				return true;
 		} catch (UnknownHostException e) {
@@ -206,121 +231,26 @@ public class Nmap {
 	}
 
 	/**
-	 * Metodo que verfica los puertos disponibles de un host 
+	 * Metodo que verfica los puertos disponibles de un host
 	 */
 	public static void port(String ip) {
-		for (int port = 1; port <= 65535; port++) {
-			try {
-				Socket socket = new Socket();
-				socket.connect(new InetSocketAddress(ip, port), 1000);
-				socket.close();
-				System.out.println("Port " + port + " is open");
-			} catch (Exception ex) {
-			}
-		}
-	}
-
-	public static void main(String[] args) throws IOException {
-
-		try {
-
-			Nmap x = new Nmap();
-
-			x.listarTarjetas();
-			x.obtenerInformacion(10);
-			System.out.println(x.imprimirInformacion());
-			// x.hostDisponibles();
-			x.port("10.0.48.68");
-			
-			System.out.println(hostDisponibles);
-
-		} catch (SocketException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	}
-
-	public static List<String> getInterfacesLista() {
-		return interfacesLista;
-	}
-
-	public static void setInterfacesLista(List<String> interfacesLista) {
-		Nmap.interfacesLista = interfacesLista;
+		
+		 final ExecutorService es = Executors.newFixedThreadPool(6000000);
+		  final int timeout = 1000;
+		  for (int port = 1; port <= 65535; port++) {
+		    portIsOpen(es, ip, port, timeout);
+		  }	
+		 es.shutdown();
 	}
 	
-	/**
-	package nmap;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.NetPermission;
-import java.net.NetworkInterface;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.logging.Level;
-
-public class Main {
-	public static void main(String[] args) throws InterruptedException, ExecutionException {
-
-		  final ExecutorService es = Executors.newFixedThreadPool(65000);
-		  final String ip = "192.168.1.254";
-		  final int timeout = 400;
-		  final List<Future<Boolean>> futures = new ArrayList<>();
-		  for (int port = 1; port <= 65535; port++) {
-		    futures.add(portIsOpen(es, ip, port, timeout));
-		  }
-		  es.shutdown();
-		  int openPorts = 0;
-		  int number=1;
-		  for (final Future<Boolean> f : futures) {
-		    try {
-				if (f.get()) {
-					System.out.println(number+ " " +f.get());
-				  openPorts++;
-				}
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				continue;
-			} catch (ExecutionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				continue;
-			}
-		    //System.out.println(number+" "+f.get());
-		    number++;
-		    
-		  }
-		  System.out.println("There are " + openPorts + " open ports on host " + ip + " (probed with a timeout of " + timeout + "ms)");
-
-
-	}
-// 
 	public static Future<Boolean> portIsOpen(final ExecutorService es, final String ip, final int port, final int timeout) {
 		  return es.submit(new Callable<Boolean>() {
 		
-		      @Override public Boolean call() {
+		     public Boolean call() {
 		        try {
 		          Socket socket = new Socket();
 		          socket.connect(new InetSocketAddress(ip, port), timeout);
+		          System.out.println("Port " + port + " is open");
 		          socket.close();
 		          
 		          return true;
@@ -330,10 +260,91 @@ public class Main {
 		      }
 		   });
 		}
-	
+
 	
 
-}
-	*/
+
+	public static void main(String[] args) throws IOException {
+
+		try {
+
+			Nmap x = new Nmap();
+
+			x.listarTarjetas();
+			for (int i = 0; i < interfacesLista.size(); i++)
+				System.out.println(interfacesLista.get(i));
+
+			x.obtenerInformacion(1);
+			System.out.println(x.imprimirInformacion());
+		//	x.hostDisponibles();
+								 x.port("10.0.48.60");
+								 /*
+								 * System.out.println(hostDisponibles);
+								 */
+		} catch (SocketException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+	public static List<String> getInterfacesLista() {
+		return interfacesLista;
+	}
+
+	public static void setInterfacesLista(List<String> interfacesLista) {
+		Nmap.interfacesLista = interfacesLista;
+	}
+
+	/**
+	 * package nmap;
+	 * 
+	 * import java.io.BufferedReader; import java.io.IOException; import
+	 * java.io.InputStream; import java.io.InputStreamReader; import
+	 * java.io.OutputStreamWriter; import java.net.DatagramPacket; import
+	 * java.net.DatagramSocket; import java.net.Inet4Address; import
+	 * java.net.InetAddress; import java.net.InetSocketAddress; import
+	 * java.net.NetPermission; import java.net.NetworkInterface; import
+	 * java.net.Socket; import java.net.SocketException; import
+	 * java.net.UnknownHostException; import java.util.ArrayList; import
+	 * java.util.Enumeration; import java.util.List; import
+	 * java.util.concurrent.Callable; import
+	 * java.util.concurrent.ExecutionException; import
+	 * java.util.concurrent.ExecutorService; import
+	 * java.util.concurrent.Executors; import java.util.concurrent.Future;
+	 * import java.util.logging.Level;
+	 * 
+	 * public class Main { public static void main(String[] args) throws
+	 * InterruptedException, ExecutionException {
+	 * 
+	 * final ExecutorService es = Executors.newFixedThreadPool(65000); final
+	 * String ip = "192.168.1.254"; final int timeout = 400; final List<Future
+	 * <Boolean>> futures = new ArrayList<>(); for (int port = 1; port <= 65535;
+	 * port++) { futures.add(portIsOpen(es, ip, port, timeout)); }
+	 * es.shutdown(); int openPorts = 0; int number=1; for (final Future
+	 * <Boolean> f : futures) { try { if (f.get()) { System.out.println(number+
+	 * " " +f.get()); openPorts++; } } catch (InterruptedException e) { // TODO
+	 * Auto-generated catch block e.printStackTrace(); continue; } catch
+	 * (ExecutionException e) { // TODO Auto-generated catch block
+	 * e.printStackTrace(); continue; } //System.out.println(number+" "
+	 * +f.get()); number++;
+	 * 
+	 * } System.out.println("There are " + openPorts + " open ports on host " +
+	 * ip + " (probed with a timeout of " + timeout + "ms)");
+	 * 
+	 * 
+	 * } // public static Future<Boolean> portIsOpen(final ExecutorService es,
+	 * final String ip, final int port, final int timeout) { return
+	 * es.submit(new Callable<Boolean>() {
+	 * 
+	 * @Override public Boolean call() { try { Socket socket = new Socket();
+	 *           socket.connect(new InetSocketAddress(ip, port), timeout);
+	 *           socket.close();
+	 * 
+	 *           return true; } catch (Exception ex) { return false; } } }); }
+	 * 
+	 * 
+	 * 
+	 *           }
+	 */
 
 }
