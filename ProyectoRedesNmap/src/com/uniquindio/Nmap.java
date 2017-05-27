@@ -243,6 +243,7 @@ public class Nmap {
 		int[] dirRed = new int[4];
 		for (int i = 0; i < mascaraIP.length; i++) {
 			dirRed[i] = mascaraIP[i] & Integer.parseInt(ipCadena[i]);
+			System.out.println(dirRed[i]);
 		}
 
 		int indice = 3;
@@ -360,7 +361,6 @@ public class Nmap {
 		}
 
 	}
-
 	public static List<String> getInterfacesLista() {
 		return interfacesLista;
 	}
