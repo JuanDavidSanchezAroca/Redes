@@ -1,32 +1,25 @@
 package com.uniquindio.vista;
 
 import java.awt.EventQueue;
+import java.awt.HeadlessException;
 import java.net.SocketException;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Vector;
-
 import javax.swing.JFrame;
 import com.uniquindio.Nmap;
 import javax.swing.JTabbedPane;
-import java.awt.BorderLayout;
-
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
 import javax.swing.JPanel;
-import javax.swing.JSpinner;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.JComboBox;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import javax.swing.JScrollBar;
 
 public class VentanaPrincipal {
 	JList<String> list;
@@ -82,6 +75,9 @@ public class VentanaPrincipal {
 		tabbedPane.addTab("Lista de equipos", null, panel_1, null);
 		panel_1.setLayout(null);
 
+		JLabel lbTitulo = new JLabel("Interfaces de red");
+		lbTitulo.setBounds(40, 12, 200, 15);
+		panel_1.add(lbTitulo);
 		cbSeleccionarTarjeta = new JComboBox();
 		cbSeleccionarTarjeta.setBounds(40, 38, 394, 30);
 		panel_1.add(cbSeleccionarTarjeta);
@@ -93,15 +89,38 @@ public class VentanaPrincipal {
 				listarEquiposEnRed();
 			}
 		});
-		btnIniciarEscaneo.setBounds(467, 42, 124, 23);
+		btnIniciarEscaneo.setBounds(467, 120, 150, 40);
 		panel_1.add(btnIniciarEscaneo);
+		
+		JButton btnInformacion= new JButton("Informacion");
+		btnInformacion.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				try {
+					int num = Integer.parseInt(cbSeleccionarTarjeta.getSelectedItem().toString().substring(0, 1));
+					logica.obtenerInformacion(num);
+					JOptionPane.showMessageDialog(null,logica.imprimirInformacion());
+				} catch (HeadlessException | SocketException e) {
+					JOptionPane.showMessageDialog(null,"la solicitud no se pudo procesar");
+				}
+			}
+		});
+		btnInformacion.setBounds(467, 55, 130, 40);
+		panel_1.add(btnInformacion);
 
 		JScrollPane scrollPane = new JScrollPane();
-		scrollPane.setBounds(40, 105, 394, 275);
+		scrollPane.setBounds(40, 132, 394, 275);
 		panel_1.add(scrollPane);
 
 		jTable1 = new JTable();
 		scrollPane.setViewportView(jTable1);
+		
+		JLabel label = new JLabel("Interfaces de red");
+		label.setBounds(40, 12, 200, 15);
+		panel_1.add(label);
+		
+		JLabel lblListaDeHost = new JLabel("Lista de host disponibles en la red");
+		lblListaDeHost.setBounds(40, 105, 290, 15);
+		panel_1.add(lblListaDeHost);
 
 		panel = new JPanel();
 		tabbedPane.addTab("Puertos disponibles", null, panel, null);
@@ -126,23 +145,6 @@ public class VentanaPrincipal {
 		btnEscanear.setBounds(346, 21, 89, 23);
 		panel.add(btnEscanear);
 
-		JPanel panel_2 = new JPanel();
-		tabbedPane.addTab("Interfaces de red", null, panel_2, null);
-		panel_2.setLayout(null);
-
-		JLabel label = new JLabel("Direccion IP del host");
-		label.setBounds(21, 9, 118, 14);
-		panel_2.add(label);
-
-		textField_1 = new JTextField();
-		textField_1.setBounds(161, 6, 160, 20);
-		textField_1.setColumns(10);
-		panel_2.add(textField_1);
-
-		JButton button = new JButton("Escanear");
-		button.setBounds(331, 5, 106, 23);
-		panel_2.add(button);
-
 		JPanel panel_3 = new JPanel();
 		tabbedPane.addTab("Servicios por puerto", null, panel_3, null);
 
@@ -161,7 +163,6 @@ public class VentanaPrincipal {
 		try {
 			int num = Integer.parseInt(cbSeleccionarTarjeta.getSelectedItem().toString().substring(0, 1));
 			logica.obtenerInformacion(num);
-			System.out.println(num);
 		} catch (NumberFormatException | SocketException e) {
 			// TODO Auto-generated catch block
 			// e.printStackTrace();
@@ -203,9 +204,6 @@ public class VentanaPrincipal {
 
 		 try{
 		 DefaultTableModel temp = (DefaultTableModel) jTable1.getModel();
-		 int a =temp.getRowCount()-1;
-		 for(int i=0; i<a; i++)
-		 temp.removeRow(i);
 		 }catch(Exception e){
 		 System.out.println(e);
 		 }
@@ -213,6 +211,7 @@ public class VentanaPrincipal {
 		DefaultTableModel modelo = new DefaultTableModel();
 		
 		//jTable1.removeAll();
+		modelo.setRowCount(0);
 		modelo.addColumn("Direccion IP");
 		jTable1.setModel(modelo);
 		ArrayList<String> datos = (ArrayList) logica.getHostDisponible();

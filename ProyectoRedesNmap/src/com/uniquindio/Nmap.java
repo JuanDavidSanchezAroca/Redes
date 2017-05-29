@@ -3,12 +3,9 @@
  */
 package com.uniquindio;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
@@ -22,7 +19,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -31,6 +27,8 @@ import java.util.concurrent.Future;
 
 /**
  * @author Juan David Sanchez A.
+ * @author Juan Camilo Correa Pacheco
+ * @author Carlos Alberto Cardona Beltran
  * @author Univerisdad Del Quindio
  * @author Armenia - Quindio
  */
@@ -42,17 +40,18 @@ public class Nmap {
 	private static NetworkInterface nombreNIC;
 	private static List<String> interfacesLista;
 	private static List<String> hostDisponible;
+	private static List<Integer> portDisponibles;
 	private static String mascaraRed;
 	private static String mac;
 	private static InetAddress miIp;
 	private static InetAddress inetAddress;
-	private static NetworkInterface networkIntefrface = null;
+	private static NetworkInterface networkIntefrface;
 	private static int hostDisponibles;
 	private static ArrayList<String> auxIp = new ArrayList<>();
-	// Encargado de ejecutar la lista de tareas Futuras
-				final static ExecutorService es = Executors.newFixedThreadPool(100);
 
-				final static List<Future<Boolean>> futures = new ArrayList<>();	
+	// Encargado de ejecutar la lista de tareas Futuras
+	final static ExecutorService es = Executors.newFixedThreadPool(100);
+	final static List<Future<Boolean>> futures = new ArrayList<>();
 
 	/**
 	 * Constructor de la clase Nmap
@@ -60,6 +59,7 @@ public class Nmap {
 	public Nmap() {
 		interfacesLista = new ArrayList<>();
 		hostDisponible = new ArrayList<>();
+		portDisponibles = new ArrayList<>();
 
 	}
 
@@ -82,11 +82,10 @@ public class Nmap {
 	 * Metodo que obtiene la informacion del host
 	 * 
 	 * @param intRed
-	 *            numero de interface de red
+	 *            numero de interface de red seleccionada por el usuario
 	 * @throws SocketException
 	 */
 	public void obtenerInformacion(int intRed) throws SocketException {
-
 		Enumeration<NetworkInterface> interfaces = nombreNIC.getNetworkInterfaces();
 		int contador = -1;
 		while (interfaces.hasMoreElements() && contador != intRed) {
@@ -110,8 +109,6 @@ public class Nmap {
 		while ((inetAddress instanceof Inet6Address)) {
 			inetAddress = (InetAddress) direccionesIp.nextElement();
 		}
-
-		// mac = getMacAdress(inetAddress);
 	}
 
 	/**
@@ -130,7 +127,6 @@ public class Nmap {
 		for (int i = 0; i < mac.length; i++) {
 			sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
 		}
-
 		address = sb.toString();
 		return address;
 	}
@@ -139,16 +135,15 @@ public class Nmap {
 	 * Metodo que reopila la informacion del host
 	 *
 	 * @return msj con la informacion del host
-	 * @throws SocketException 
+	 * @throws SocketException
 	 */
 	public String imprimirInformacion() throws SocketException {
 		String inf = "";
 		inf += "Interfaces:" + networkIntefrface.toString() + "\n";
 		inf += "Mi direccion IP es:" + inetAddress.getHostAddress() + "\n";
 		inf += "Mi Mascara de red es:" + mascaraRed + "\n";
-		inf += "Mi direccion MAC es: " + getMacAdress(inetAddress)+ "\n";
+		// inf += "Mi direccion MAC es: " + getMacAdress(inetAddress) + "\n";
 		return inf;
-
 	}
 
 	/**
@@ -163,39 +158,26 @@ public class Nmap {
 	 * @param direccion
 	 *            de la red en arreglo de 4 posiciones
 	 */
-	public void calcularHostDisponibles(int i, int numeroE, int red[],int disponible) {
+	public void calcularHostDisponibles(int i, int numeroE, int red[], int disponible) {
 		if (numeroE == 255) {
 			return;
 		} else {
-					
-
 			for (int j = i; j < red.length; j++) {
-				for (int k = numeroE; k <=disponible; k++) {
+				for (int k = numeroE; k <= disponible; k++) {
 					red[i] = k;
 					if (i != 3) {
-						calcularHostDisponibles(i + 1, 0, red,255);
+						calcularHostDisponibles(i + 1, 0, red, 255);
 					} else {
 						red[i] = k;
 					}
 					String ip = red[0] + "." + red[1] + "." + red[2] + "." + red[3];
-					// if (realizarPing(ip)) {
-					// hostDisponible.add(ip);
-					// System.out.println(ip);
-					// }
-
 					// Se envia la tarea de hacer ping, pero se deja como una
 					// tarea futura, cuyo resultado se leera despues
 
-					if(!auxIp.contains(ip)){
+					if (!auxIp.contains(ip)) {
 						futures.add(realizarPing2(ip, es));
 						auxIp.add(ip);
 					}
-
-					// if (realizarPing2(ip, es)) {
-					// hostDisponible.add(ip);
-					// System.out.println(ip);
-					// }
-
 				}
 			}
 			// Variable auxiliar para saber a que posicion del arraylist de
@@ -218,12 +200,12 @@ public class Nmap {
 	 */
 	public void hostDisponibles() {
 		hostDisponibles = (int) Math.pow(2, 32 - Integer.parseInt(mascaraRed));
+		hostDisponible.clear();
 		int aux = Integer.parseInt(mascaraRed);
 		int[] mascaraIP = new int[4];
 		String[] ipCadena = inetAddress.getHostAddress().split("\\.");
 		int cont = 0;
 		while (aux != 0) {
-
 			if (aux >= 8) {
 				mascaraIP[cont] = 255;
 				aux -= 8;
@@ -243,7 +225,6 @@ public class Nmap {
 		int[] dirRed = new int[4];
 		for (int i = 0; i < mascaraIP.length; i++) {
 			dirRed[i] = mascaraIP[i] & Integer.parseInt(ipCadena[i]);
-			System.out.println(dirRed[i]);
 		}
 
 		int indice = 3;
@@ -251,11 +232,10 @@ public class Nmap {
 			indice--;
 		}
 
-		// calcularHostDisponibles(3 - indice, dirRed[3 - indice], dirRed);
 		int posicionMascara = Integer.parseInt(mascaraRed) / 8;
-		int distancia=(int) Math.pow(2, 8-Integer.parseInt(mascaraRed)%8);	
-		System.out.println(distancia);
-		calcularHostDisponibles(posicionMascara, dirRed[posicionMascara], dirRed,distancia+dirRed[posicionMascara]-1);
+		int distancia = (int) Math.pow(2, 8 - Integer.parseInt(mascaraRed) % 8);
+		calcularHostDisponibles(posicionMascara, dirRed[posicionMascara], dirRed,
+				distancia + dirRed[posicionMascara] - 1);
 		int contador = 0;
 		for (final Future<Boolean> f : futures) {
 			try {
@@ -263,15 +243,10 @@ public class Nmap {
 					hostDisponible.add(auxIp.get(contador));
 				}
 			} catch (InterruptedException | ExecutionException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			contador++;
 		}
-		System.out.println("Hay " + hostDisponible.size() + " Host Disponibles");
-		// calcularHostDisponibles(posicionMascara, dirRed[posicionMascara],
-		// dirRed);
-
 	}
 
 	/**
@@ -298,13 +273,14 @@ public class Nmap {
 	 * Metodo que verfica los puertos disponibles de un host
 	 */
 	public static void port(String ip) {
-
 		final ExecutorService es = Executors.newFixedThreadPool(1000);
 		final int timeout = 1500;
 		for (int port = 1; port <= 65535; port++) {
 			portIsOpen(es, ip, port, timeout);
 		}
 		es.shutdown();
+		
+      
 	}
 
 	public static Future<Boolean> portIsOpen(final ExecutorService es, final String ip, final int port,
@@ -315,15 +291,47 @@ public class Nmap {
 				try {
 					Socket socket = new Socket();
 					socket.connect(new InetSocketAddress(ip, port), timeout);
-					 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-			          BufferedReader  in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			            out.println("Scanning!");
-			            String fromServer;
-			            while ((fromServer = in.readLine()) != null) {
-			                System.out.println("Server: " + fromServer);
-			                if (fromServer.equals("Server here!"))
-			                    break;
-			            }
+					System.out.println(ip + " con puerto " + port + "open");
+					portDisponibles.add(port);
+					socket.close();
+					return true;
+				} catch (Exception ex) {
+					return false;
+				}
+			}
+		});
+	}
+
+	/**
+	 * Metodo que verfica los puertos disponibles de un host
+	 */
+	public static void portServicio(String ip) {
+
+		final ExecutorService es = Executors.newFixedThreadPool(1000);
+		final int timeout = 1500;
+		for (int port = 1; port <= 65535; port++) {
+			portIsOpen(es, ip, port, timeout);
+		}
+		es.shutdown();
+	}
+
+	public static Future<Boolean> portIsOpenServicio(final ExecutorService es, final String ip, final int port,
+			final int timeout) {
+		return es.submit(new Callable<Boolean>() {
+
+			public Boolean call() {
+				try {
+					Socket socket = new Socket();
+					socket.connect(new InetSocketAddress(ip, port), timeout);
+					PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+					BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+					out.println("Scanning!");
+					String fromServer;
+					while ((fromServer = in.readLine()) != null) {
+						System.out.println("Server: " + fromServer);
+						if (fromServer.equals("Server here!"))
+							break;
+					}
 					System.out.println("Port " + port + " is open");
 					socket.close();
 
@@ -333,44 +341,6 @@ public class Nmap {
 				}
 			}
 		});
-	}
-
-	public static void main(String[] args) throws IOException {
-
-		try {
-
-			Nmap x = new Nmap();
-
-			x.listarTarjetas();
-			for (int i = 0; i < interfacesLista.size(); i++)
-				System.out.println(interfacesLista.get(i));
-
-			x.obtenerInformacion(1);
-			System.out.println(x.imprimirInformacion());
-			// System.out.println(mascaraRed);
-		    // x.hostDisponibles();
-			System.out.println("Despues de host disponibles");
-			
-			x.port("10.0.48.126");
-			/*
-			 * System.out.println(hostDisponibles);
-			 */
-		} catch (SocketException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	}
-	public static List<String> getInterfacesLista() {
-		return interfacesLista;
-	}
-
-	public static void setInterfacesLista(List<String> interfacesLista) {
-		Nmap.interfacesLista = interfacesLista;
-	}
-
-	public static List<String> getHostDisponible() {
-		return hostDisponible;
 	}
 
 	/**
@@ -404,6 +374,33 @@ public class Nmap {
 			}
 		});
 
+	}
+
+	/**
+	 * Metodo para obtener unlistado de las interfaces de red
+	 * 
+	 * @return lista string con la descripcion de la interfaces de red
+	 */
+	public static List<String> getInterfacesLista() {
+		return interfacesLista;
+	}
+
+	/**
+	 * Metodo para obtener el listado de los host disponibles en mi red
+	 * 
+	 * @return lista de string con las direcciones ip de los host disponibles
+	 */
+	public static List<String> getHostDisponible() {
+		return hostDisponible;
+	}
+
+	/**
+	 * Metodo para obtener el listado de los puertos disponibles de un host
+	 * 
+	 * @return lista de enteros con los puertos disponibless
+	 */
+	public static List<Integer> getPortDisponibles() {
+		return portDisponibles;
 	}
 
 }
