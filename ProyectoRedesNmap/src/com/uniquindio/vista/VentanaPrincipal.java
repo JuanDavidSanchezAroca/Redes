@@ -127,11 +127,11 @@ public class VentanaPrincipal {
 		panel = new JPanel();
 		tabbedPane.addTab("Puertos disponibles", null, panel, null);
 		panel.setLayout(null);
-		
+
 		JScrollPane scrollPane_1 = new JScrollPane();
 		scrollPane_1.setBounds(41, 81, 394, 275);
 		panel.add(scrollPane_1);
-		
+
 		jtPuertos = new JTable();
 		scrollPane_1.setViewportView(jtPuertos);
 
@@ -147,7 +147,7 @@ public class VentanaPrincipal {
 		JButton btnEscanear = new JButton("Escanear");
 		btnEscanear.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-			escanearPuertos();
+				escanearPuertos();
 			}
 		});
 		btnEscanear.setBounds(346, 21, 89, 23);
@@ -234,20 +234,26 @@ public class VentanaPrincipal {
 		}
 
 	}
-/**
- * Este metodo se encarga de listar en una tabla todos los puertos que
- * estan disponibles para el numero de host ingresado en el campo de texto
- */
+
+	/**
+	 * Este metodo se encarga de listar en una tabla todos los puertos que estan
+	 * disponibles para el numero de host ingresado en el campo de texto
+	 */
 	public void escanearPuertos() {
-		DefaultTableModel modelo = new DefaultTableModel();
-		modelo.addColumn("Numero de puerto");
-		jtPuertos.setModel(modelo);
-		
 		String ip = textField.getText();
-		Object[] fila = new Object[1];
-		for(int puerto:Nmap.port(ip)){
-			fila[0]=puerto;
-			modelo.addRow(fila);
+
+		if (Nmap.realizarPing(ip)) {
+			DefaultTableModel modelo = new DefaultTableModel();
+			modelo.addColumn("Numero de puerto");
+			jtPuertos.setModel(modelo);
+
+			Object[] fila = new Object[1];
+			for (int puerto : Nmap.port(ip)) {
+				fila[0] = puerto;
+				modelo.addRow(fila);
+			}
+		}else{
+			JOptionPane.showMessageDialog(null, "La direccion ip no es alcanzable");
 		}
 	}
 }
