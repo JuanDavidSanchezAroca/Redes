@@ -136,11 +136,11 @@ public class VentanaPrincipal {
 		scrollPane_1.setViewportView(jtPuertos);
 
 		JLabel lblDireccionIpDel = new JLabel("Direccion IP del host");
-		lblDireccionIpDel.setBounds(20, 21, 118, 14);
+		lblDireccionIpDel.setBounds(20, 21, 187, 14);
 		panel.add(lblDireccionIpDel);
 
 		textField = new JTextField();
-		textField.setBounds(144, 18, 154, 20);
+		textField.setBounds(225, 19, 154, 20);
 		panel.add(textField);
 		textField.setColumns(10);
 
@@ -150,7 +150,7 @@ public class VentanaPrincipal {
 				escanearPuertos();
 			}
 		});
-		btnEscanear.setBounds(346, 21, 89, 23);
+		btnEscanear.setBounds(425, 17, 128, 23);
 		panel.add(btnEscanear);
 
 		JPanel panel_3 = new JPanel();
