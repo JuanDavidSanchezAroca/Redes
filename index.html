@@ -5,7 +5,7 @@
 	
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no"/>
-  <title>Proyecto redes II</title>
+  <title>Proyecto redes I</title>
 
   <!-- CSS  -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -19,10 +19,10 @@
     <div class="section no-pad-bot">
       <div class="container">
         <br><br>
-        <h3 class="header center black-text text-lighten-2"><b>PROYECTO REDES DE COMPUTACION I</b></h3>
+        <h3 class="header center black-text text-lighten-2"><b>PROYECTO REDES DE COMPUTADORES I</b></h3>
           <br>
         <div class="row center">
-          <h3 class="header col s12  grey-text "><b> nmap en java <b></h3>
+          <h3 class="header col s12  grey-text "><b> JNetMap: nmap en Java <b></h3>
         </div>
         <br><br>
       </div>
@@ -99,7 +99,24 @@ El software contara con las siguientes funcionalidades principales las cuales so
              <div class="col s12">
                  <div class="card-panel ">
                      <span class="black-text">
-				Informacion corresponde a pacheco 
+				<p align=justify> 
+			     
+			     Cuando la aplicación se ejecuta mediante líneas de comando, podemos
+			     ejecutar diferentes comandos para acceder a las funcionalidades de la aplicación:
+			       
+			     </p>
+			     <p>
+				       1. Para listar las interfaces de red que posee el equipo, se ejecuta el comando "-if". Una vez ejecutado, aparecerán las diferentes interfaces de red del equipo en el que se ejecuta la aplicación.
+			     </p>
+			     <p>
+				     2. Para listar los host disponibles en una red, se ejecuta el comando "-ls", adicionalmente, podemos agregar el ID de la NIC conectada a la red que se desea analizar. El ID se muestra una vez ejecutado el comando "-if". Una vez ejecutado, se listarán todos los host que respondan a un mensaje ICMP lanzado desde el host sobre el cual se ejecuta la aplicación.
+			     </p>
+			     <p>
+				     3. Para listar los puertos disponibles que tiene un host, se ejecuta el comando "-pl", seguido de la IP del host al que se desea escanear los puertos. También se puede elegir la NIC colocando seguidamente el ID de la misma. Una vez ejecutado el comando, aparecerá una lista con todos los puertos disponibles del host a analizar.
+			     </p>
+			     <p>
+				     4. Por último, también se puede acceder a una guía de usuario ejecutando el comando "-h", esto listará una lista con todos los comandos disponibles en la aplicación.
+			     </p>
                      </span>
                  </div>
             </div>
