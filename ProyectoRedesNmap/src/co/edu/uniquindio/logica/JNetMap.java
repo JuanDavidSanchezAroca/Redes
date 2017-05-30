@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.uniquindio;
+package co.edu.uniquindio.logica;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,41 +26,62 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
+ * Clase principal de logica de la aplicacion
  * @author Juan David Sanchez A.
  * @author Juan Camilo Correa Pacheco
  * @author Carlos Alberto Cardona Beltran
  * @author Univerisdad Del Quindio
  * @author Armenia - Quindio
  */
-public class Nmap {
+public class JNetMap {
 
 	/***
-	 * Atributos
+	 * Atributo auxiliar para obtener el nombre de una NIC
 	 */
 	private static NetworkInterface nombreNIC;
+	/**
+	 * Lista de interfaces de red despues del proceso
+	 */
 	private static List<String> interfacesLista;
+	/**
+	 * Lista de host disponibles de la red despues del proceso
+	 */
 	private static List<String> hostDisponible;
+	/**
+	 * Lista de puertos disponibles despues del proceso
+	 */
 	private static List<Integer> portDisponibles;
+	/**
+	 * Mascara de la red asociada a la NIC
+	 */
 	private static String mascaraRed;
-	private static String mac;
-	private static InetAddress miIp;
+	/**
+	 * Direccion inet auxiliar
+	 */
 	private static InetAddress inetAddress;
+	/**
+	 * Lista de interfaces de red
+	 */
 	private static NetworkInterface networkIntefrface;
-	private static int hostDisponibles;
-	private static ArrayList<String> auxIp = new ArrayList<>();
+	/**
+	 * Lista auxiliar para guardar algunas IP
+	 */
+	private static ArrayList<String> auxIp;
 
-	// Encargado de ejecutar la lista de tareas Futuras
+	/**
+	 * Conjunto de hilos que se encargara de ejecutar tareas futuras
+	 */
 	final static ExecutorService es = Executors.newFixedThreadPool(100);
 	final static List<Future<Boolean>> futures = new ArrayList<>();
 
 	/**
 	 * Constructor de la clase Nmap
 	 */
-	public Nmap() {
+	public JNetMap() {
 		interfacesLista = new ArrayList<>();
 		hostDisponible = new ArrayList<>();
 		portDisponibles = new ArrayList<>();
-
+		auxIp = new ArrayList<>();
 	}
 
 	/**
@@ -85,6 +106,7 @@ public class Nmap {
 	 *            numero de interface de red seleccionada por el usuario
 	 * @throws SocketException
 	 */
+	@SuppressWarnings("static-access")
 	public void obtenerInformacion(int intRed) throws SocketException {
 		Enumeration<NetworkInterface> interfaces = nombreNIC.getNetworkInterfaces();
 		int contador = -1;
@@ -112,26 +134,6 @@ public class Nmap {
 	}
 
 	/**
-	 * Metodo que obtiene la direccion mac
-	 * 
-	 * @param ip
-	 *            ip del host
-	 * @return mac
-	 * @throws SocketException
-	 */
-	public String getMacAdress(InetAddress ip) throws SocketException {
-		String address = null;
-		NetworkInterface network = NetworkInterface.getByInetAddress(ip);
-		byte[] mac = network.getHardwareAddress();
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < mac.length; i++) {
-			sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
-		}
-		address = sb.toString();
-		return address;
-	}
-
-	/**
 	 * Metodo que reopila la informacion del host
 	 *
 	 * @return msj con la informacion del host
@@ -142,7 +144,6 @@ public class Nmap {
 		inf += "Interfaces:" + networkIntefrface.toString() + "\n";
 		inf += "Mi direccion IP es:" + inetAddress.getHostAddress() + "\n";
 		inf += "Mi Mascara de red es:" + mascaraRed + "\n";
-		// inf += "Mi direccion MAC es: " + getMacAdress(inetAddress) + "\n";
 		return inf;
 	}
 
@@ -158,7 +159,7 @@ public class Nmap {
 	 * @param direccion
 	 *            de la red en arreglo de 4 posiciones
 	 */
-	public void calcularHostDisponibles(int i, int numeroE, int red[], int disponible) {
+	private void calcularHostDisponibles(int i, int numeroE, int red[], int disponible) {
 		if (numeroE == 255) {
 			return;
 		} else {
@@ -180,17 +181,6 @@ public class Nmap {
 					}
 				}
 			}
-			// Variable auxiliar para saber a que posicion del arraylist de
-			// direcciones ip acceder
-			// El numero actual hace se asocia con el resultado falso o
-			// verdadedo obtenido de la tarea enviada con anterioridad
-			// de los futures
-
-			// Metodo para recorrer el resultado de los hilos
-			// Se lee en el ciclo para identificar cuales fueron las direcciones
-			// ip
-			// que respondieron ante el ping realizado con anterioridad
-
 		}
 	}
 
@@ -199,7 +189,6 @@ public class Nmap {
 	 * host disponibles
 	 */
 	public void hostDisponibles() {
-		hostDisponibles = (int) Math.pow(2, 32 - Integer.parseInt(mascaraRed));
 		hostDisponible.clear();
 		int aux = Integer.parseInt(mascaraRed);
 		int[] mascaraIP = new int[4];
@@ -236,7 +225,14 @@ public class Nmap {
 		int distancia = (int) Math.pow(2, 8 - Integer.parseInt(mascaraRed) % 8);
 		calcularHostDisponibles(posicionMascara, dirRed[posicionMascara], dirRed,
 				distancia + dirRed[posicionMascara] - 1);
+		
+		// El numero actual hace se asocia con el resultado falso o
+		// verdadedo obtenido de la tarea enviada con anterioridad
+		// de los futures
 		int contador = 0;
+		
+		// Se lee en el ciclo para identificar cuales fueron las direcciones ip
+		// que respondieron ante el ping realizado con anterioridad
 		for (final Future<Boolean> f : futures) {
 			try {
 				if (f.get()) {
@@ -251,20 +247,14 @@ public class Nmap {
 
 	/**
 	 * Metodo que realiza ping a un host
+	 * @throws IOException, UnknownHostException 
 	 */
-	public static boolean realizarPing(String ip) {
+	public boolean realizarPing(String ip) throws IOException, UnknownHostException {
 		InetAddress direccion;
-		try {
 			direccion = InetAddress.getByName(ip);
 			boolean alcanzable = direccion.isReachable(1500);
 			if (alcanzable)
 				return true;
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
 		return false;
 
 	}
@@ -274,7 +264,7 @@ public class Nmap {
 	 * @param ip, la direccion ip del host en el que se va a escanear todos los puertos
 	 * @return listaPuertos, listado de puertos abiertos
 	 */
-	public static ArrayList<Integer> port(String ip) {
+	public ArrayList<Integer> port(String ip) {
 		final ExecutorService es = Executors.newFixedThreadPool(1000);
 		final int timeout = 400;
 		final List<Future<Boolean>> tareas = new ArrayList<>();
@@ -299,8 +289,17 @@ public class Nmap {
 		}
 		return listadoPuertos;
 	}
+	
+	/**
+	 * Metodo encargado de veificar si un puerto está abierto
+	 * @param es, el ejecutor de tareas
+	 * @param ip, la ip del host al que se escanearan los puertos
+	 * @param port, el numero del puerto
+	 * @param timeout, tiempo limite de respuesta
+	 * @return un hilo con el resultado
+	 */
 
-	public static Future<Boolean> portIsOpen(final ExecutorService es, final String ip, final int port,
+	private Future<Boolean> portIsOpen(final ExecutorService es, final String ip, final int port,
 			final int timeout) {
 		return es.submit(new Callable<Boolean>() {
 
@@ -321,18 +320,28 @@ public class Nmap {
 
 	/**
 	 * Metodo que verfica los puertos disponibles de un host
+	 * @param ip, la ip del host a que se hará ping
 	 */
-	public static void portServicio(String ip) {
+	public void portServicio(String ip) {
 
 		final ExecutorService es = Executors.newFixedThreadPool(1000);
 		final int timeout = 1500;
 		for (int port = 1; port <= 65535; port++) {
-			portIsOpen(es, ip, port, timeout);
+			portIsOpenServicio(es, ip, port, timeout);
 		}
 		es.shutdown();
 	}
+	
+	/**
+	 * Metodo encargado de veificar si un puerto está abierto, y analizar su servicio
+	 * @param es, el ejecutor de tareas
+	 * @param ip, la ip del host al que se escanearan los puertos
+	 * @param port, el numero del puerto
+	 * @param timeout, tiempo limite de respuesta
+	 * @return un hilo con el resultado
+	 */
 
-	public static Future<Boolean> portIsOpenServicio(final ExecutorService es, final String ip, final int port,
+	private Future<Boolean> portIsOpenServicio(final ExecutorService es, final String ip, final int port,
 			final int timeout) {
 		return es.submit(new Callable<Boolean>() {
 
@@ -363,29 +372,21 @@ public class Nmap {
 	/**
 	 * Este metodo se encarga de realizar ping a la direccion ip recibida por
 	 * parametro pero lo pospone como un
-	 * 
-	 * @param ip
-	 * @param es
-	 * @return
+	 * @param ip, la ip del host al que se hará ping
+	 * @param es, el ejecutor de tareas
+	 * @return un hilo con el resultado
 	 */
-	public static Future<Boolean> realizarPing2(final String ip, final ExecutorService es) {
+	private Future<Boolean> realizarPing2(final String ip, final ExecutorService es) {
 
 		return es.submit(new Callable<Boolean>() {
 
-			public Boolean call() {
+			public Boolean call() throws UnknownHostException,IOException {
 
 				InetAddress direccion;
-				try {
 					direccion = InetAddress.getByName(ip);
 					boolean alcanzable = direccion.isReachable(1500);
 					if (alcanzable)
 						return true;
-				} catch (UnknownHostException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-
 				return false;
 
 			}
@@ -398,7 +399,7 @@ public class Nmap {
 	 * 
 	 * @return lista string con la descripcion de la interfaces de red
 	 */
-	public static List<String> getInterfacesLista() {
+	public List<String> getInterfacesLista() {
 		return interfacesLista;
 	}
 
@@ -407,7 +408,7 @@ public class Nmap {
 	 * 
 	 * @return lista de string con las direcciones ip de los host disponibles
 	 */
-	public static List<String> getHostDisponible() {
+	public List<String> getHostDisponible() {
 		return hostDisponible;
 	}
 
@@ -416,7 +417,7 @@ public class Nmap {
 	 * 
 	 * @return lista de enteros con los puertos disponibless
 	 */
-	public static List<Integer> getPortDisponibles() {
+	public List<Integer> getPortDisponibles() {
 		return portDisponibles;
 	}
 
