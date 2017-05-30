@@ -27,11 +27,13 @@ public class VentanaPrincipal {
 	public Nmap logica;
 
 	private JFrame frame;
+	// Campo donde se ingresa la direccion ip para escanear sus puertos
 	private JTextField textField;
 	private JTextField textField_1;
 	private JTable jTable1;
 	// Este combobox contiene una lista de las tarjetas de red disponibles
 	JComboBox cbSeleccionarTarjeta;
+	private JTable jtPuertos;
 
 	/**
 	 * Launch the application.
@@ -91,16 +93,16 @@ public class VentanaPrincipal {
 		});
 		btnIniciarEscaneo.setBounds(467, 120, 150, 40);
 		panel_1.add(btnIniciarEscaneo);
-		
-		JButton btnInformacion= new JButton("Informacion");
+
+		JButton btnInformacion = new JButton("Informacion");
 		btnInformacion.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
 					int num = Integer.parseInt(cbSeleccionarTarjeta.getSelectedItem().toString().substring(0, 1));
 					logica.obtenerInformacion(num);
-					JOptionPane.showMessageDialog(null,logica.imprimirInformacion());
+					JOptionPane.showMessageDialog(null, logica.imprimirInformacion());
 				} catch (HeadlessException | SocketException e) {
-					JOptionPane.showMessageDialog(null,"la solicitud no se pudo procesar");
+					JOptionPane.showMessageDialog(null, "la solicitud no se pudo procesar");
 				}
 			}
 		});
@@ -113,11 +115,11 @@ public class VentanaPrincipal {
 
 		jTable1 = new JTable();
 		scrollPane.setViewportView(jTable1);
-		
+
 		JLabel label = new JLabel("Interfaces de red");
 		label.setBounds(40, 12, 200, 15);
 		panel_1.add(label);
-		
+
 		JLabel lblListaDeHost = new JLabel("Lista de host disponibles en la red");
 		lblListaDeHost.setBounds(40, 105, 290, 15);
 		panel_1.add(lblListaDeHost);
@@ -125,12 +127,13 @@ public class VentanaPrincipal {
 		panel = new JPanel();
 		tabbedPane.addTab("Puertos disponibles", null, panel, null);
 		panel.setLayout(null);
-
-		JList<String> list_1 = new JList<>(new DefaultListModel<String>());
-		list_1.setBounds(30, 106, 215, 171);
-		((DefaultListModel) list_1.getModel()).addElement("carlos");
-
-		panel.add(list_1);
+		
+		JScrollPane scrollPane_1 = new JScrollPane();
+		scrollPane_1.setBounds(41, 81, 394, 275);
+		panel.add(scrollPane_1);
+		
+		jtPuertos = new JTable();
+		scrollPane_1.setViewportView(jtPuertos);
 
 		JLabel lblDireccionIpDel = new JLabel("Direccion IP del host");
 		lblDireccionIpDel.setBounds(20, 21, 118, 14);
@@ -142,6 +145,11 @@ public class VentanaPrincipal {
 		textField.setColumns(10);
 
 		JButton btnEscanear = new JButton("Escanear");
+		btnEscanear.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+			escanearPuertos();
+			}
+		});
 		btnEscanear.setBounds(346, 21, 89, 23);
 		panel.add(btnEscanear);
 
@@ -200,17 +208,16 @@ public class VentanaPrincipal {
 	 * Metodo para llenar la tabla con las direccones ip disponibles
 	 */
 	public void llenarTablaHosts() {
-	
 
-		 try{
-		 DefaultTableModel temp = (DefaultTableModel) jTable1.getModel();
-		 }catch(Exception e){
-		 System.out.println(e);
-		 }
+		try {
+			DefaultTableModel temp = (DefaultTableModel) jTable1.getModel();
+		} catch (Exception e) {
+			System.out.println(e);
+		}
 
 		DefaultTableModel modelo = new DefaultTableModel();
-		
-		//jTable1.removeAll();
+
+		// jTable1.removeAll();
 		modelo.setRowCount(0);
 		modelo.addColumn("Direccion IP");
 		jTable1.setModel(modelo);
@@ -226,5 +233,21 @@ public class VentanaPrincipal {
 
 		}
 
+	}
+/**
+ * Este metodo se encarga de listar en una tabla todos los puertos que
+ * estan disponibles para el numero de host ingresado en el campo de texto
+ */
+	public void escanearPuertos() {
+		DefaultTableModel modelo = new DefaultTableModel();
+		modelo.addColumn("Numero de puerto");
+		jtPuertos.setModel(modelo);
+		
+		String ip = textField.getText();
+		Object[] fila = new Object[1];
+		for(int puerto:Nmap.port(ip)){
+			fila[0]=puerto;
+			modelo.addRow(fila);
+		}
 	}
 }

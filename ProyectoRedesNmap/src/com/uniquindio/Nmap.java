@@ -271,16 +271,33 @@ public class Nmap {
 
 	/**
 	 * Metodo que verfica los puertos disponibles de un host
+	 * @param ip, la direccion ip del host en el que se va a escanear todos los puertos
+	 * @return listaPuertos, listado de puertos abiertos
 	 */
-	public static void port(String ip) {
+	public static ArrayList<Integer> port(String ip) {
 		final ExecutorService es = Executors.newFixedThreadPool(1000);
-		final int timeout = 1500;
+		final int timeout = 400;
+		final List<Future<Boolean>> tareas = new ArrayList<>();
 		for (int port = 1; port <= 65535; port++) {
-			portIsOpen(es, ip, port, timeout);
+			tareas.add(portIsOpen(es, ip, port, timeout));
 		}
 		es.shutdown();
-		
-      
+		//Variable auxiliar para saber cual es el puerto que se esta leyendo en la lista de tareas
+		//
+		int auxPuerto = 1;
+		//ArrayList con la lista de puertos activos para este host
+		ArrayList<Integer> listadoPuertos=new ArrayList<>();
+		for(final Future<Boolean> puertoActual:tareas){
+			try{
+				if(puertoActual.get()){
+					listadoPuertos.add(auxPuerto);
+				}
+			}catch(Exception e){
+				
+			}
+			auxPuerto++;
+		}
+		return listadoPuertos;
 	}
 
 	public static Future<Boolean> portIsOpen(final ExecutorService es, final String ip, final int port,
