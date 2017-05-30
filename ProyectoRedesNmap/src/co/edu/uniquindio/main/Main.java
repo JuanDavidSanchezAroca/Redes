@@ -17,10 +17,10 @@ public class Main {
 			x = new JNetMap();
 			executeTerminal(args);
 		} else {
-			// x=new JNetMap();
-			//x.portServicios("192.168.1.55");
-			VentanaPrincipal ventana = new VentanaPrincipal();
-			ventana.run();
+			//x=new JNetMap();
+			//x.portServicios("10.0.48.94");
+		VentanaPrincipal ventana = new VentanaPrincipal();
+		ventana.run();
 		}
 	}
 
@@ -59,6 +59,8 @@ public class Main {
 			System.out.println("Formato de NICID no valido. " + 
 			"Ejecute \"-h\" para mas informacion.");
 		}
+		
+		System.exit(0);
 	}
 
 	private static void executeList(String[] args)
@@ -76,6 +78,7 @@ public class Main {
 		System.out.printf("Host\t\t\tIP\n");
 		for (int i = 0; i < host.size(); i++)
 			System.out.printf("%d\t\t\t%s\n", i + 1, host.get(i));
+		System.exit(0);
 
 	}
 
@@ -84,6 +87,7 @@ public class Main {
 		List<String> interfaces = x.getInterfacesLista();
 		for (int i = 0; i < interfaces.size(); i++)
 			System.out.println(i + " " +interfaces.get(i));
+		System.exit(0);
 	}
 	
 	private static void executePorts(String[]args) 
@@ -105,6 +109,7 @@ public class Main {
 			} else
 				System.out.println("El host no se encuentra conectado " + "a la red de la NIC seleccionada.");
 		}
+		System.exit(0);
 	}
 	
 	private static void executeMenu(){
@@ -117,5 +122,6 @@ public class Main {
 				+ " de un host, ejecute el comando \"-pl IPHOST [NICID]\",  "
 				+ "donde la NICID es el numero con el cual se identific� previamente la NIC"
 				+ " despues de usar el comando \"-if\".\n");
+		System.exit(0);
 	}
 }

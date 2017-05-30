@@ -318,7 +318,6 @@ public class JNetMap {
 				try {
 					Socket socket = new Socket();
 					socket.connect(new InetSocketAddress(ip, port), timeout);
-					System.out.println(ip + " con puerto " + port + "open");
 					portDisponibles.add(port);
 					socket.close();
 					return true;
@@ -419,10 +418,7 @@ public class JNetMap {
 	}
 
 	
-	
-
-	
-	
+		
 	/**
 	 * Este metodo se encarga de realizar ping a la direccion ip recibida por
 	 * parametro pero lo pospone como un
