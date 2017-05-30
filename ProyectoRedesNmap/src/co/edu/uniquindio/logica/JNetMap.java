@@ -27,6 +27,7 @@ import java.util.concurrent.Future;
 
 /**
  * Clase principal de logica de la aplicacion
+ * 
  * @author Juan David Sanchez A.
  * @author Juan Camilo Correa Pacheco
  * @author Carlos Alberto Cardona Beltran
@@ -225,12 +226,12 @@ public class JNetMap {
 		int distancia = (int) Math.pow(2, 8 - Integer.parseInt(mascaraRed) % 8);
 		calcularHostDisponibles(posicionMascara, dirRed[posicionMascara], dirRed,
 				distancia + dirRed[posicionMascara] - 1);
-		
+
 		// El numero actual hace se asocia con el resultado falso o
 		// verdadedo obtenido de la tarea enviada con anterioridad
 		// de los futures
 		int contador = 0;
-		
+
 		// Se lee en el ciclo para identificar cuales fueron las direcciones ip
 		// que respondieron ante el ping realizado con anterioridad
 		for (final Future<Boolean> f : futures) {
@@ -247,21 +248,26 @@ public class JNetMap {
 
 	/**
 	 * Metodo que realiza ping a un host
-	 * @throws IOException, UnknownHostException 
+	 * 
+	 * @throws IOException,
+	 *             UnknownHostException
 	 */
 	public boolean realizarPing(String ip) throws IOException, UnknownHostException {
 		InetAddress direccion;
-			direccion = InetAddress.getByName(ip);
-			boolean alcanzable = direccion.isReachable(1500);
-			if (alcanzable)
-				return true;
+		direccion = InetAddress.getByName(ip);
+		boolean alcanzable = direccion.isReachable(1500);
+		if (alcanzable)
+			return true;
 		return false;
 
 	}
 
 	/**
 	 * Metodo que verfica los puertos disponibles de un host
-	 * @param ip, la direccion ip del host en el que se va a escanear todos los puertos
+	 * 
+	 * @param ip,
+	 *            la direccion ip del host en el que se va a escanear todos los
+	 *            puertos
 	 * @return listaPuertos, listado de puertos abiertos
 	 */
 	public ArrayList<Integer> port(String ip) {
@@ -272,35 +278,40 @@ public class JNetMap {
 			tareas.add(portIsOpen(es, ip, port, timeout));
 		}
 		es.shutdown();
-		//Variable auxiliar para saber cual es el puerto que se esta leyendo en la lista de tareas
+		// Variable auxiliar para saber cual es el puerto que se esta leyendo en
+		// la lista de tareas
 		//
 		int auxPuerto = 1;
-		//ArrayList con la lista de puertos activos para este host
-		ArrayList<Integer> listadoPuertos=new ArrayList<>();
-		for(final Future<Boolean> puertoActual:tareas){
-			try{
-				if(puertoActual.get()){
+		// ArrayList con la lista de puertos activos para este host
+		ArrayList<Integer> listadoPuertos = new ArrayList<>();
+		for (final Future<Boolean> puertoActual : tareas) {
+			try {
+				if (puertoActual.get()) {
 					listadoPuertos.add(auxPuerto);
 				}
-			}catch(Exception e){
-				
+			} catch (Exception e) {
+
 			}
 			auxPuerto++;
 		}
 		return listadoPuertos;
 	}
-	
+
 	/**
-	 * Metodo encargado de veificar si un puerto está abierto
-	 * @param es, el ejecutor de tareas
-	 * @param ip, la ip del host al que se escanearan los puertos
-	 * @param port, el numero del puerto
-	 * @param timeout, tiempo limite de respuesta
+	 * Metodo encargado de veificar si un puerto estï¿½ abierto
+	 * 
+	 * @param es,
+	 *            el ejecutor de tareas
+	 * @param ip,
+	 *            la ip del host al que se escanearan los puertos
+	 * @param port,
+	 *            el numero del puerto
+	 * @param timeout,
+	 *            tiempo limite de respuesta
 	 * @return un hilo con el resultado
 	 */
 
-	private Future<Boolean> portIsOpen(final ExecutorService es, final String ip, final int port,
-			final int timeout) {
+	private Future<Boolean> portIsOpen(final ExecutorService es, final String ip, final int port, final int timeout) {
 		return es.submit(new Callable<Boolean>() {
 
 			public Boolean call() {
@@ -318,30 +329,55 @@ public class JNetMap {
 		});
 	}
 
-	/**
-	 * Metodo que verfica los puertos disponibles de un host
-	 * @param ip, la ip del host a que se hará ping
-	 */
-	public void portServicio(String ip) {
-
-		final ExecutorService es = Executors.newFixedThreadPool(1000);
-		final int timeout = 1500;
-		for (int port = 1; port <= 65535; port++) {
-			portIsOpenServicio(es, ip, port, timeout);
-		}
-		es.shutdown();
-	}
 	
 	/**
-	 * Metodo encargado de veificar si un puerto está abierto, y analizar su servicio
-	 * @param es, el ejecutor de tareas
-	 * @param ip, la ip del host al que se escanearan los puertos
-	 * @param port, el numero del puerto
-	 * @param timeout, tiempo limite de respuesta
+	 * Metodo que verfica los puertos disponibles de un host
+	 * 
+	 * @param ip,
+	 *            la ip del host a que se harï¿½ ping
+	 */
+	public ArrayList<Integer> portServicios(String ip) {
+		final ExecutorService es = Executors.newFixedThreadPool(1000);
+		final int timeout = 400;
+		final List<Future<Boolean>> tareas = new ArrayList<>();
+		for (int port = 1; port <= 65535; port++) {
+			tareas.add(portIsOpenServicios(es, ip, port, timeout));
+		}
+		es.shutdown();
+		// Variable auxiliar para saber cual es el puerto que se esta leyendo en
+		// la lista de tareas
+		//
+		int auxPuerto = 1;
+		// ArrayList con la lista de puertos activos para este host
+		ArrayList<Integer> listadoPuertos = new ArrayList<>();
+		for (final Future<Boolean> puertoActual : tareas) {
+			try {
+				if (puertoActual.get()) {
+					listadoPuertos.add(auxPuerto);
+				}
+			} catch (Exception e) {
+
+			}
+			auxPuerto++;
+		}
+		return listadoPuertos;
+	}
+
+	/**
+	 * Metodo encargado de veificar si un puerto estï¿½ abierto, y analizar su
+	 * servicio
+	 * 
+	 * @param es,
+	 *            el ejecutor de tareas
+	 * @param ip,
+	 *            la ip del host al que se escanearan los puertos
+	 * @param port,
+	 *            el numero del puerto
+	 * @param timeout,
+	 *            tiempo limite de respuesta
 	 * @return un hilo con el resultado
 	 */
-
-	private Future<Boolean> portIsOpenServicio(final ExecutorService es, final String ip, final int port,
+	private Future<Boolean> portIsOpenServicios(final ExecutorService es, final String ip, final int port,
 			final int timeout) {
 		return es.submit(new Callable<Boolean>() {
 
@@ -349,18 +385,31 @@ public class JNetMap {
 				try {
 					Socket socket = new Socket();
 					socket.connect(new InetSocketAddress(ip, port), timeout);
-					PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+					boolean autoflush = true;
+					PrintWriter out = new PrintWriter(socket.getOutputStream(), autoflush);
 					BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-					out.println("Scanning!");
-					String fromServer;
-					while ((fromServer = in.readLine()) != null) {
-						System.out.println("Server: " + fromServer);
-						if (fromServer.equals("Server here!"))
-							break;
-					}
-					System.out.println("Port " + port + " is open");
-					socket.close();
+					// send an HTTP request to the web server
+					out.println("GET / HTTP/1.1");
+					out.println("Host: www.google.com:80");
+					out.println("Connection: Close");
+					out.println();
 
+					// read the response
+					boolean loop = true;
+					StringBuilder sb = new StringBuilder(8096);
+					while (loop) {
+						if (in.ready()) {
+							int i = 0;
+							while (i != -1) {
+								i = in.read();
+								sb.append((char) i);
+							}
+							loop = false;
+						}
+					}
+					System.out.println(sb.toString() + port);
+					System.out.println("sales");
+					socket.close();
 					return true;
 				} catch (Exception ex) {
 					return false;
@@ -369,30 +418,39 @@ public class JNetMap {
 		});
 	}
 
+	
+	
+
+	
+	
 	/**
 	 * Este metodo se encarga de realizar ping a la direccion ip recibida por
 	 * parametro pero lo pospone como un
-	 * @param ip, la ip del host al que se hará ping
-	 * @param es, el ejecutor de tareas
+	 * 
+	 * @param ip,
+	 *            la ip del host al que se harï¿½ ping
+	 * @param es,
+	 *            el ejecutor de tareas
 	 * @return un hilo con el resultado
 	 */
 	private Future<Boolean> realizarPing2(final String ip, final ExecutorService es) {
 
 		return es.submit(new Callable<Boolean>() {
 
-			public Boolean call() throws UnknownHostException,IOException {
+			public Boolean call() throws UnknownHostException, IOException {
 
 				InetAddress direccion;
-					direccion = InetAddress.getByName(ip);
-					boolean alcanzable = direccion.isReachable(1500);
-					if (alcanzable)
-						return true;
+				direccion = InetAddress.getByName(ip);
+				boolean alcanzable = direccion.isReachable(1500);
+				if (alcanzable)
+					return true;
 				return false;
 
 			}
 		});
 
 	}
+
 
 	/**
 	 * Metodo para obtener unlistado de las interfaces de red

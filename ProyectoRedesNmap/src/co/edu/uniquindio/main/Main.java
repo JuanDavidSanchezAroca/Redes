@@ -17,6 +17,8 @@ public class Main {
 			x = new JNetMap();
 			executeTerminal(args);
 		} else {
+			// x=new JNetMap();
+			//x.portServicios("192.168.1.55");
 			VentanaPrincipal ventana = new VentanaPrincipal();
 			ventana.run();
 		}
@@ -110,10 +112,10 @@ public class Main {
 				+ "Si usted desea listar las interfaces de red de su equipo, ejecute el"
 				+ " comando \"-if\".\nSi usted desea listar los host activos en la "
 				+ "red, ejecute el comando \"-ls [NICID]\", "
-				+ "donde la NICID es el numero con el cual se identificó previamente la NIC"
+				+ "donde la NICID es el numero con el cual se identificï¿½ previamente la NIC"
 				+ " despues de usar el comando \"-if\".\nSi desea listar los puertos abiertos"
 				+ " de un host, ejecute el comando \"-pl IPHOST [NICID]\",  "
-				+ "donde la NICID es el numero con el cual se identificó previamente la NIC"
+				+ "donde la NICID es el numero con el cual se identificï¿½ previamente la NIC"
 				+ " despues de usar el comando \"-if\".\n");
 	}
 }
